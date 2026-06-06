@@ -317,6 +317,36 @@ def build_excel(df, vessel, pol):
     buf=io.BytesIO(); wb.save(buf); buf.seek(0)
     return buf, bookings
 
+def load_excel_file(uploaded_file):
+    """Carga archivo Excel con manejo robusto de errores"""
+    try:
+        # Intentar con data_only=False primero (mantiene fórmulas)
+        wb = openpyxl.load_workbook(uploaded_file, data_only=False)
+        ws = wb["BR"]
+        
+        # Leer datos desde row 3 (headers) en adelante
+        data = []
+        headers = None
+        
+        for i, row in enumerate(ws.iter_rows(min_row=3, values_only=True), start=1):
+            if i == 1:  # Primera fila después de headers
+                headers = row
+            else:
+                if row and any(cell is not None for cell in row):  # Ignorar filas vacías
+                    data.append(row)
+        
+        if not headers:
+            raise ValueError("No se encontraron headers en la fila 3")
+        
+        # Convertir a DataFrame
+        df = pd.DataFrame(data, columns=headers)
+        df = df.dropna(subset=["BookingRef"])
+        
+        return df
+        
+    except Exception as e:
+        return None, str(e)
+
 # ── Main UI ─────────────────────────────────────────────────────────────
 col1, col2 = st.columns([1, 1], gap="large")
 
@@ -337,14 +367,13 @@ with col2:
 st.divider()
 
 if uploaded:
-    # Load data directly without soffice conversion
-    try:
-        # pandas can read .xls files directly with xlrd
-        df = pd.read_excel(uploaded, sheet_name="BR", header=2)
-        df = df.dropna(subset=["BookingRef"])
-    except Exception as e:
-        st.error(f"❌ Error leyendo el DCR: {e}")
-        st.info("📋 Asegúrate que:\n- El archivo sea .xls o .xlsx válido\n- Exista la sheet 'BR'\n- Los headers estén en fila 3")
+    # Load data con manejo robusto
+    df = load_excel_file(uploaded)
+    
+    if df is None or (isinstance(df, tuple) and df[0] is None):
+        error_msg = df[1] if isinstance(df, tuple) else "Error desconocido"
+        st.error(f"❌ Error leyendo el DCR: {error_msg}")
+        st.info("📋 Asegúrate que:\n- El archivo sea .xls o .xlsx válido\n- Exista la sheet **'BR'**\n- Los headers estén en **fila 3**\n- El archivo no esté corrupto")
         st.stop()
 
     bookings      = list(dict.fromkeys(df["BookingRef"].tolist()))
