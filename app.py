@@ -9,16 +9,16 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Side, Border
 from openpyxl.utils import get_column_letter
 from datetime import datetime
-import io, subprocess, os, tempfile
+import io, os
 
-# ── Page config ───────────────────────────────────────────────────────────────
+# ── Page config ───────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="DG Approval Generator",
     page_icon="🚢",
     layout="wide"
 )
 
-# ── Styles ────────────────────────────────────────────────────────────────────
+# ── Styles ─────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
     .main { background-color: #f7fbfe; }
@@ -43,12 +43,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── Header ────────────────────────────────────────────────────────────────────
+# ── Header ─────────────────────────────────────────────────────────────
 st.markdown("## 🚢 DG Approval Generator")
 st.markdown("Sube tu DCR, configura el barco y descarga las plantillas listas.")
 st.divider()
 
-# ── Sidebar config ────────────────────────────────────────────────────────────
+# ── Sidebar config ──────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("### ⚙️ Configuración")
     vessel_name = st.text_input(
@@ -317,7 +317,7 @@ def build_excel(df, vessel, pol):
     buf=io.BytesIO(); wb.save(buf); buf.seek(0)
     return buf, bookings
 
-# ── Main UI ───────────────────────────────────────────────────────────────────
+# ── Main UI ─────────────────────────────────────────────────────────────
 col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
@@ -337,28 +337,15 @@ with col2:
 st.divider()
 
 if uploaded:
-    # Convert .xls to .xlsx if needed
-    with tempfile.TemporaryDirectory() as tmp:
-        file_path = os.path.join(tmp, uploaded.name)
-        with open(file_path, "wb") as f:
-            f.write(uploaded.getvalue())
-
-        if uploaded.name.lower().endswith(".xls"):
-            with st.spinner("Convirtiendo .xls a .xlsx..."):
-                subprocess.run(
-                    ["soffice","--headless","--convert-to","xlsx",
-                     file_path,"--outdir",tmp],
-                    capture_output=True, timeout=30
-                )
-                file_path = os.path.splitext(file_path)[0]+".xlsx"
-
-        # Load data
-        try:
-            df = pd.read_excel(file_path, sheet_name="BR", header=2)
-            df = df.dropna(subset=["BookingRef"])
-        except Exception as e:
-            st.error(f"Error leyendo el DCR: {e}")
-            st.stop()
+    # Load data directly without soffice conversion
+    try:
+        # pandas can read .xls files directly with xlrd
+        df = pd.read_excel(uploaded, sheet_name="BR", header=2)
+        df = df.dropna(subset=["BookingRef"])
+    except Exception as e:
+        st.error(f"❌ Error leyendo el DCR: {e}")
+        st.info("📋 Asegúrate que:\n- El archivo sea .xls o .xlsx válido\n- Exista la sheet 'BR'\n- Los headers estén en fila 3")
+        st.stop()
 
     bookings      = list(dict.fromkeys(df["BookingRef"].tolist()))
     unique_uns    = df["UNNumber"].nunique()
