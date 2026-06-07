@@ -318,34 +318,23 @@ def build_excel(df, vessel, pol):
     return buf, bookings
 
 def load_excel_file(uploaded_file):
-    """Carga archivo Excel con manejo robusto de errores"""
+    """Carga archivo Excel (.xls o .xlsx) sin cambios"""
     try:
-        # Intentar con data_only=False primero (mantiene fórmulas)
-        wb = openpyxl.load_workbook(uploaded_file, data_only=False)
-        ws = wb["BR"]
+        file_ext = uploaded_file.name.lower().split('.')[-1]
         
-        # Leer datos desde row 3 (headers) en adelante
-        data = []
-        headers = None
+        if file_ext == "xls":
+            # Usar xlrd para archivos .xls (Excel 97-2003)
+            df = pd.read_excel(uploaded_file, sheet_name="BR", header=2, engine='xlrd')
+        else:
+            # Usar openpyxl para archivos .xlsx (Excel 2007+)
+            df = pd.read_excel(uploaded_file, sheet_name="BR", header=2, engine='openpyxl')
         
-        for i, row in enumerate(ws.iter_rows(min_row=3, values_only=True), start=1):
-            if i == 1:  # Primera fila después de headers
-                headers = row
-            else:
-                if row and any(cell is not None for cell in row):  # Ignorar filas vacías
-                    data.append(row)
-        
-        if not headers:
-            raise ValueError("No se encontraron headers en la fila 3")
-        
-        # Convertir a DataFrame
-        df = pd.DataFrame(data, columns=headers)
+        # Limpiar
         df = df.dropna(subset=["BookingRef"])
-        
         return df
         
     except Exception as e:
-        return None, str(e)
+        return None
 
 # ── Main UI ─────────────────────────────────────────────────────────────
 col1, col2 = st.columns([1, 1], gap="large")
@@ -367,12 +356,11 @@ with col2:
 st.divider()
 
 if uploaded:
-    # Load data con manejo robusto
+    # Load data
     df = load_excel_file(uploaded)
     
-    if df is None or (isinstance(df, tuple) and df[0] is None):
-        error_msg = df[1] if isinstance(df, tuple) else "Error desconocido"
-        st.error(f"❌ Error leyendo el DCR: {error_msg}")
+    if df is None:
+        st.error(f"❌ Error leyendo el DCR")
         st.info("📋 Asegúrate que:\n- El archivo sea .xls o .xlsx válido\n- Exista la sheet **'BR'**\n- Los headers estén en **fila 3**\n- El archivo no esté corrupto")
         st.stop()
 
