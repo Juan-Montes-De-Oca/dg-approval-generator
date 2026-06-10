@@ -318,20 +318,29 @@ def build_excel(df, vessel, pol):
     return buf, bookings
 
 def load_excel_file(uploaded_file):
-    """Carga archivo Excel (.xls o .xlsx) sin cambios"""
+    """Carga archivo Excel (.xls o .xlsx) desde DMAXS"""
     try:
         file_ext = uploaded_file.name.lower().split('.')[-1]
         
-        if file_ext == "xls":
-            # Usar xlrd para archivos .xls (Excel 97-2003)
-            df = pd.read_excel(uploaded_file, sheet_name="BR", header=2, engine='xlrd')
-        else:
-            # Usar openpyxl para archivos .xlsx (Excel 2007+)
+        # Intentar con openpyxl primero (funciona para .xlsx y algunos .xls modernos)
+        try:
             df = pd.read_excel(uploaded_file, sheet_name="BR", header=2, engine='openpyxl')
+        except:
+            # Si falla, intentar con xlrd (solo para .xls muy antiguos)
+            try:
+                df = pd.read_excel(uploaded_file, sheet_name="BR", header=2, engine='xlrd')
+            except:
+                # Último intento: sin especificar engine
+                df = pd.read_excel(uploaded_file, sheet_name="BR", header=2)
         
-        # Limpiar
+        # Validar que exista la columna BookingRef
+        if "BookingRef" not in df.columns:
+            return None
+        
+        # Limpiar filas vacías
         df = df.dropna(subset=["BookingRef"])
-        return df
+        
+        return df if not df.empty else None
         
     except Exception as e:
         return None
@@ -361,7 +370,7 @@ if uploaded:
     
     if df is None:
         st.error(f"❌ Error leyendo el DCR")
-        st.info("📋 Asegúrate que:\n- El archivo sea .xls o .xlsx válido\n- Exista la sheet **'BR'**\n- Los headers estén en **fila 3**\n- El archivo no esté corrupto")
+        st.info("📋 Asegúrate que:\n- El archivo sea .xls o .xlsx válido\n- Exista la sheet **'BR'**\n- Los headers estén en **fila 3**\n- Exista la columna **'BookingRef'**\n- El archivo no esté corrupto")
         st.stop()
 
     bookings      = list(dict.fromkeys(df["BookingRef"].tolist()))
