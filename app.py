@@ -356,12 +356,12 @@ def load_dcr(uploaded_file):
         # Leer contenido como bytes para poder reintentar si falla
         content = uploaded_file.read()
         
-        # calamine lee tanto .xls como .xlsx
+        # python_calamine lee tanto .xls como .xlsx
         df = pd.read_excel(
             io.BytesIO(content),
             sheet_name="BR",
             header=2,
-            engine="calamine"
+            engine="python_calamine"
         )
 
         if "BookingRef" not in df.columns:
