@@ -395,7 +395,7 @@ if uploaded:
     df, error = load_dcr(uploaded)
 
     if error:
-        st.error(f"❌ Error leyendo el DCR: {error}")
+        st.error(f"❌ Error leyendo el DCR!: {error}")
         st.info("Asegúrate que:\n- El archivo sea .xls o .xlsx válido\n- Exista la sheet **BR**\n- Los headers estén en la fila 3")
         st.stop()
 
