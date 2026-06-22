@@ -1,39 +1,3 @@
-# DG Approval Generator — Web App
-
-Generador automático de plantillas DG Approval para MSC.
-Desarrollado por Juan Deo.
-
-## ¿Cómo desplegar en Streamlit Cloud? (GRATIS)
-
-### Paso 1 — Crea una cuenta en GitHub
-Ve a github.com y crea una cuenta si no tienes.
-
-### Paso 2 — Crea un repositorio nuevo
-- Click en "New repository"
-- Nombre: `dg-approval-generator`
-- Visibilidad: Public (necesario para Streamlit Cloud gratis)
-- Click "Create repository"
-
-### Paso 3 — Sube los archivos
-Sube estos dos archivos al repositorio:
-- `app.py`
-- `requirements.txt`
-
-### Paso 4 — Despliega en Streamlit Cloud
-- Ve a share.streamlit.io
-- Inicia sesión con tu cuenta de GitHub
-- Click "New app"
-- Selecciona tu repositorio `dg-approval-generator`
-- Branch: `main`
-- Main file path: `app.py`
-- Click "Deploy"
-
-### Paso 5 — Listo
-En 2-3 minutos tendrás una URL publica como:
-https://tu-usuario-dg-approval-generator.streamlit.app
-
-Puedes compartir esa URL con cualquier persona.
-
 ## ¿Cómo usarla?
 
 1. Abre la URL de la app
