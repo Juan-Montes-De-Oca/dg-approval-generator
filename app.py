@@ -1,7 +1,3 @@
-"""
-DG APPROVAL GENERATOR — Web App
-Hecho con Streamlit · Proyecto de Juan Deo · MSC
-"""
 
 import streamlit as st
 import pandas as pd
