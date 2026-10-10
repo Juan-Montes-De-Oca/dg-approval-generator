@@ -1,4 +1,4 @@
-## ¿Cómo usarla?
+## Cómo usarla?
 
 1. Abre la URL de la app
 2. En el panel izquierdo edita el nombre del barco si cambio
